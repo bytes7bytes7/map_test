@@ -11,7 +11,7 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Map Test',
       theme: lightTheme,
-      home: MapScreen(),
+      home: const MapScreen(),
     );
   }
 }

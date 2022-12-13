@@ -11,6 +11,13 @@ class MapScreen extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final mapController = useMapController();
+    final isSearching = useValueNotifier(false);
+    final searchFocus = useFocusNode();
+
+    mapController.listenerMapSingleTapping.addListener(() {
+      isSearching.value = false;
+      searchFocus.unfocus();
+    });
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -19,10 +26,34 @@ class MapScreen extends HookWidget {
           OSMFlutter(
             controller: mapController,
           ),
-          const SafeArea(
-            child: Positioned(
-              top: 0,
-              child: SearchBar(),
+          SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Focus(
+                  child: SearchBar(
+                    focusNode: searchFocus,
+                    onChanged: (query) {},
+                  ),
+                  onFocusChange: (hasFocus) {
+                    isSearching.value = hasFocus;
+                  },
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: isSearching,
+                  builder: (context, value, child) {
+                    if (!value) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return child ?? const SizedBox.shrink();
+                  },
+                  child: const SearchList(
+                    maxHeight: 300,
+                    items: [],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
