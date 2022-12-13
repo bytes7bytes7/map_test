@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'feature/map/presentation/screen/map_screen.dart';
+import 'theme/light_theme.dart';
+
 class App extends StatelessWidget {
   const App({super.key});
 
@@ -7,7 +10,8 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Map Test',
-      home: const Scaffold(),
+      theme: lightTheme,
+      home: MapScreen(),
     );
   }
 }
