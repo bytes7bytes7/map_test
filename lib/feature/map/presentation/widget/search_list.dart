@@ -9,10 +9,12 @@ class SearchList extends StatelessWidget {
     super.key,
     required this.maxHeight,
     required this.items,
+    this.errorMessage,
   });
 
   final double maxHeight;
   final List<Widget> items;
+  final String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -33,19 +35,27 @@ class SearchList extends StatelessWidget {
         color: theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: items.isEmpty
-          ? Text(
-              'Ничего не найдено',
-              style: theme.textTheme.subtitle2,
-              textAlign: TextAlign.center,
-            )
-          : ListView.builder(
+      child: items.isNotEmpty
+          ? ListView.builder(
               shrinkWrap: true,
               itemCount: items.length,
               itemBuilder: (context, index) {
                 return items[index];
               },
-            ),
+            )
+          : errorMessage != null
+              ? Text(
+                  errorMessage!,
+                  style: theme.textTheme.subtitle2?.copyWith(
+                    color: theme.errorColor,
+                  ),
+                  textAlign: TextAlign.center,
+                )
+              : Text(
+                  'Ничего не найдено',
+                  style: theme.textTheme.subtitle2,
+                  textAlign: TextAlign.center,
+                ),
     );
   }
 }

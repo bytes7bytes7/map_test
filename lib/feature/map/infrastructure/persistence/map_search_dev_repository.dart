@@ -1,22 +1,66 @@
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+// ignore_for_file: avoid_dynamic_calls
+
+import 'package:dio/dio.dart';
 
 import '../../application/persistence/map_search_repository.dart';
+import '../../domain/map_address.dart';
 import '../../domain/map_location.dart';
-import '../mapper/map_location_mapper.dart';
+import '../../domain/map_point.dart';
+
+const _authority = 'photon.komoot.io';
+const _api = '/api';
+
+MapLocation mapLocationFromApi(Map<String, dynamic> json) {
+  return MapLocation(
+    point: mapPointFromApi(json['geometry']),
+    address: mapAddressFromApi(json['properties']),
+  );
+}
+
+MapPoint mapPointFromApi(Map<String, dynamic> json) {
+  return MapPoint(
+    latitude: json['coordinates'][1],
+    longitude: json['coordinates'][0],
+  );
+}
+
+MapAddress mapAddressFromApi(Map<String, dynamic> json) {
+  return MapAddress(
+    postcode: json['postcode'],
+    name: json['name'],
+    street: json['street'],
+    city: json['city'],
+    state: json['state'],
+    country: json['country'],
+  );
+}
 
 class MapSearchDevRepository implements MapSearchRepository {
   const MapSearchDevRepository({
-    required MapLocationMapper mapLocationMapper,
-  }) : _mapLocationMapper = mapLocationMapper;
+    required Dio dio,
+  }) : _dio = dio;
 
-  final MapLocationMapper _mapLocationMapper;
+  final Dio _dio;
 
   @override
   Future<List<MapLocation>> getAddressSuggestions({
     required String query,
+    int limit = 5,
   }) async {
-    final result = await addressSuggestion(query);
+    final response = await _dio.getUri(
+      Uri.https(
+        _authority,
+        _api,
+        {
+          'q': query,
+          'limit': limit == 0 ? '' : '$limit',
+        },
+      ),
+    );
+    final json = response.data;
 
-    return result.map(_mapLocationMapper.fromSearchInfo).toList();
+    return (json['features'] as List)
+        .map<MapLocation>((e) => mapLocationFromApi(e as Map<String, dynamic>))
+        .toList();
   }
 }

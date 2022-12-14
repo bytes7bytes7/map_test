@@ -119,6 +119,7 @@ class MapScreen extends HookWidget {
                               },
                               child: SearchList(
                                 maxHeight: 300,
+                                errorMessage: state.errorMessage,
                                 items: state.searchSuggestions.map(
                                   (e) {
                                     return SearchSuggestionCard(
