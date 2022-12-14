@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-class Address extends Equatable {
+class MapAddress extends Equatable {
   final String? postcode;
   final String? name;
   final String? street;
@@ -8,7 +8,7 @@ class Address extends Equatable {
   final String? state;
   final String? country;
 
-  const Address({
+  const MapAddress({
     this.postcode,
     this.name,
     this.street,

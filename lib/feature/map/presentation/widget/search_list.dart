@@ -40,6 +40,7 @@ class SearchList extends StatelessWidget {
               textAlign: TextAlign.center,
             )
           : ListView.builder(
+              shrinkWrap: true,
               itemCount: items.length,
               itemBuilder: (context, index) {
                 return items[index];

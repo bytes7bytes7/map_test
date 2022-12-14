@@ -1,20 +1,17 @@
 import 'package:equatable/equatable.dart';
 
-import 'address.dart';
-import 'geo_point.dart';
-
 class MapPoint extends Equatable {
-  final GeoPoint? point;
-  final Address? address;
+  final double longitude;
+  final double latitude;
 
   const MapPoint({
-    this.point,
-    this.address,
+    required this.latitude,
+    required this.longitude,
   });
 
   @override
   List<Object?> get props => [
-        point,
-        address,
+        longitude,
+        latitude,
       ];
 }

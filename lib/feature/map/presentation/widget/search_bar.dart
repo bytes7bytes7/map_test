@@ -6,10 +6,12 @@ const _padding = 4.0;
 class SearchBar extends StatelessWidget {
   const SearchBar({
     super.key,
+    this.controller,
     this.onChanged,
     this.focusNode,
   });
 
+  final TextEditingController? controller;
   final void Function(String)? onChanged;
   final FocusNode? focusNode;
 
@@ -32,6 +34,7 @@ class SearchBar extends StatelessWidget {
           ),
           Expanded(
             child: TextField(
+              controller: controller,
               onChanged: onChanged,
               focusNode: focusNode,
               decoration: const InputDecoration(
