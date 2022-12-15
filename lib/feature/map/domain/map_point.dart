@@ -13,6 +13,13 @@ class MapPoint extends Equatable {
     return '$latitude, $longitude';
   }
 
+  MapPoint clone() {
+    return MapPoint(
+      latitude: latitude,
+      longitude: longitude,
+    );
+  }
+
   @override
   List<Object?> get props => [
         longitude,

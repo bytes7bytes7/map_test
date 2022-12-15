@@ -67,6 +67,18 @@ class MapAddress extends Equatable {
     return null;
   }
 
+  MapAddress clone() {
+    return MapAddress(
+      postcode: postcode,
+      houseNumber: houseNumber,
+      name: name,
+      street: street,
+      city: city,
+      state: state,
+      country: country,
+    );
+  }
+
   @override
   List<Object?> get props => [
         postcode,

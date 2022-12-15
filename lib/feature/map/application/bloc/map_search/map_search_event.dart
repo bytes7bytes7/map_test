@@ -26,3 +26,7 @@ class SelectSuggestionEvent extends MapSearchEvent {
   @override
   List<Object?> get props => [location];
 }
+
+class LoadHistoryEvent extends MapSearchEvent {
+  const LoadHistoryEvent();
+}

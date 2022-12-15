@@ -7,6 +7,7 @@ import '../../../../common/application/bloc/errorable.dart';
 import '../../../../common/application/bloc/loadable.dart';
 import '../../../../common/wrapped.dart';
 import '../../../domain/map_location.dart';
+import '../../persistence/map_history_repository.dart';
 import '../../persistence/map_search_repository.dart';
 
 part 'map_search_event.dart';
@@ -19,7 +20,9 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
   MapSearchBloc(
     super.initialState, {
     required MapSearchRepository mapSearchRepository,
-  }) : _mapSearchRepository = mapSearchRepository {
+    required MapHistoryRepository mapHistoryRepository,
+  })  : _mapSearchRepository = mapSearchRepository,
+        _mapHistoryRepository = mapHistoryRepository {
     on<SetQueryEvent>(
       _setQuery,
       transformer: (events, mapper) => sequential<SetQueryEvent>().call(
@@ -31,9 +34,14 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
       _selectSuggestion,
       transformer: restartable(),
     );
+    on<LoadHistoryEvent>(
+      _loadHistory,
+      transformer: droppable(),
+    );
   }
 
   final MapSearchRepository _mapSearchRepository;
+  final MapHistoryRepository _mapHistoryRepository;
 
   Future<void> _setQuery(
     SetQueryEvent event,
@@ -42,12 +50,7 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
     emit(state.loading());
 
     if (event.query.isEmpty) {
-      emit(
-        state.copyWith(
-          isLoading: false,
-          searchSuggestions: [],
-        ),
-      );
+      add(const LoadHistoryEvent());
     } else {
       try {
         final suggestions = await _mapSearchRepository.getAddressSuggestions(
@@ -57,6 +60,7 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
         emit(
           state.copyWith(
             isLoading: false,
+            loadedFromHistory: false,
             searchSuggestions: suggestions,
           ),
         );
@@ -76,13 +80,56 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
   ) async {
     emit(state.loading());
 
-    emit(
-      state.copyWith(
-        isLoading: false,
-        selectedSuggestion: Wrapped(event.location),
-        updatedSuggestion: true,
-        searchSuggestions: [],
-      ),
-    );
+    if (state.loadedFromHistory) {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          selectedSuggestion: Wrapped(event.location),
+          updatedSuggestion: true,
+        ),
+      );
+    } else {
+      try {
+        await _mapHistoryRepository.saveLocation(event.location);
+
+        emit(
+          state.copyWith(
+            isLoading: false,
+            selectedSuggestion: Wrapped(event.location),
+            updatedSuggestion: true,
+          ),
+        );
+      } catch (e) {
+        emit(
+          state.error('Не удалось обновить историю').copyWith(
+                selectedSuggestion: Wrapped(event.location),
+                updatedSuggestion: true,
+              ),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadHistory(
+    LoadHistoryEvent event,
+    Emitter<MapSearchState> emit,
+  ) async {
+    emit(state.loading());
+
+    try {
+      final history = await _mapHistoryRepository.getHistory();
+
+      emit(
+        state.copyWith(
+          isLoading: false,
+          loadedFromHistory: true,
+          searchSuggestions: history,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.error('Не удалось загрузить историю'),
+      );
+    }
   }
 }

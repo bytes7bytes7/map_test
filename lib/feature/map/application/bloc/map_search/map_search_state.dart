@@ -7,6 +7,7 @@ class MapSearchState extends Equatable with Loadable, Errorable {
     this.query = '',
     this.searchSuggestions = const [],
     this.selectedSuggestion,
+    this.loadedFromHistory = false,
     this.updatedSuggestion = false,
   });
 
@@ -22,6 +23,8 @@ class MapSearchState extends Equatable with Loadable, Errorable {
 
   final MapLocation? selectedSuggestion;
 
+  final bool loadedFromHistory;
+
   final bool updatedSuggestion;
 
   MapSearchState copyWith({
@@ -30,6 +33,7 @@ class MapSearchState extends Equatable with Loadable, Errorable {
     String? query,
     List<MapLocation>? searchSuggestions,
     Wrapped<MapLocation>? selectedSuggestion,
+    bool? loadedFromHistory,
     bool? updatedSuggestion = false,
   }) {
     return MapSearchState(
@@ -40,6 +44,7 @@ class MapSearchState extends Equatable with Loadable, Errorable {
       selectedSuggestion: selectedSuggestion != null
           ? selectedSuggestion.value
           : this.selectedSuggestion,
+      loadedFromHistory: loadedFromHistory ?? this.loadedFromHistory,
       updatedSuggestion: updatedSuggestion ?? this.updatedSuggestion,
     );
   }
@@ -62,6 +67,7 @@ class MapSearchState extends Equatable with Loadable, Errorable {
         query,
         searchSuggestions,
         selectedSuggestion,
+        loadedFromHistory,
         updatedSuggestion,
       ];
 }

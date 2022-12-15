@@ -9,6 +9,7 @@ import 'package:osm_flutter_hooks/osm_flutter_hooks.dart';
 import '../../../common/presentation/hook/draggable_scrollable_controller.dart';
 import '../../application/bloc/map_search/map_search_bloc.dart';
 import '../../application/bloc/place_info/place_info_bloc.dart';
+import '../../application/persistence/map_history_repository.dart';
 import '../../application/persistence/map_search_repository.dart';
 import '../../domain/map_location.dart';
 import '../../domain/map_point.dart';
@@ -48,7 +49,8 @@ class MapScreen extends HookWidget {
             create: (context) => MapSearchBloc(
               const MapSearchState(),
               mapSearchRepository: _getIt.get<MapSearchRepository>(),
-            ),
+              mapHistoryRepository: _getIt.get<MapHistoryRepository>(),
+            )..add(const LoadHistoryEvent()),
           ),
           BlocProvider(
             create: (context) => PlaceInfoBloc(
@@ -150,11 +152,7 @@ class _Body extends HookWidget {
               }
 
               if (state.updatedSuggestion) {
-                final query = state.queryForSelectedLocation;
-
-                if (query != null && searchController.text != query) {
-                  searchController.text = query;
-                }
+                _updateQuery(state.queryForSelectedLocation);
               }
             },
             builder: (context, state) {
@@ -168,10 +166,7 @@ class _Body extends HookWidget {
                     child: SearchBar(
                       controller: searchController,
                       focusNode: searchFocus,
-                      onClear: () {
-                        searchController.clear();
-                        _unfocusSearch();
-                      },
+                      onClear: _clearSearchBar,
                       onChanged: (query) {
                         mapSearchBloc.add(
                           SetQueryEvent(
@@ -201,20 +196,12 @@ class _Body extends HookWidget {
                       errorMessage: state.errorMessage,
                       items: state.searchSuggestions.map(
                         (e) {
+                          final title = e.beautifiedName;
+
                           return SearchSuggestionCard(
-                            title: e.address?.name ?? 'address',
+                            title: title ?? '???',
                             onPressed: () {
-                              searchFocus.unfocus();
-                              mapSearchBloc.add(
-                                SelectSuggestionEvent(
-                                  location: e,
-                                ),
-                              );
-                              placeInfoBloc.add(
-                                SelectLocationEvent(
-                                  location: e,
-                                ),
-                              );
+                              _selectSuggestion(e);
                             },
                           );
                         },
@@ -238,8 +225,7 @@ class _Body extends HookWidget {
               _hideBottomSheet();
             }
 
-            final nearestPoint =
-                state.selectedLocation?.nearestLocation?.point;
+            final nearestPoint = state.selectedLocation?.nearestLocation?.point;
             final exactPoint = state.selectedLocation?.point;
 
             if (nearestPoint != null) {
@@ -271,9 +257,8 @@ class _Body extends HookWidget {
                 String? subtitle;
                 if (nearestPoint != null) {
                   title = nearestPoint.beautifiedName;
-                  subtitle = title != null
-                      ? nearestPoint.address?.description
-                      : null;
+                  subtitle =
+                      title != null ? nearestPoint.address?.description : null;
                 } else if (exactPoint != null) {
                   title = exactPoint.beautifiedName;
                 }
@@ -304,45 +289,17 @@ class _Body extends HookWidget {
                                 subtitle: subtitle,
                                 onPrimary: nearestPoint != null
                                     ? () {
-                                        final location = state
-                                            .selectedLocation
-                                            ?.nearestLocation;
-
-                                        if (location != null) {
-                                          placeInfoBloc.add(
-                                            SelectLocationEvent(
-                                              location: location,
-                                            ),
-                                          );
-                                          mapSearchBloc.add(
-                                            SelectSuggestionEvent(
-                                              location: location,
-                                            ),
-                                          );
-                                        }
+                                        _switchOnLocation(
+                                          state.selectedLocation
+                                              ?.nearestLocation,
+                                        );
                                       }
                                     : null,
                                 onSecondary: exactPoint != null
                                     ? () {
-                                        final point =
-                                            state.selectedLocation?.point;
-
-                                        if (point != null) {
-                                          placeInfoBloc.add(
-                                            SelectLocationEvent(
-                                              location: MapLocation(
-                                                point: point,
-                                              ),
-                                            ),
-                                          );
-                                          mapSearchBloc.add(
-                                            SelectSuggestionEvent(
-                                              location: MapLocation(
-                                                point: point,
-                                              ),
-                                            ),
-                                          );
-                                        }
+                                        _switchOnPoint(
+                                          state.selectedLocation?.point,
+                                        );
                                       }
                                     : null,
                                 onClosed: () {
@@ -400,6 +357,35 @@ class _Body extends HookWidget {
     }
   }
 
+  void _updateQuery(String? query) {
+    if (query != null && searchController.text != query) {
+      searchController.text = query;
+    }
+  }
+
+  void _clearSearchBar() {
+    searchController.clear();
+    _unfocusSearch();
+
+    mapSearchBloc.add(const SetQueryEvent(query: ''));
+  }
+
+  void _selectSuggestion(MapLocation location) {
+    searchFocus.unfocus();
+
+    mapSearchBloc.add(
+      SelectSuggestionEvent(
+        location: location,
+      ),
+    );
+
+    placeInfoBloc.add(
+      SelectLocationEvent(
+        location: location,
+      ),
+    );
+  }
+
   Future<void> _selectNewPoint(MapPoint point) async {
     _logger.info('select new point');
 
@@ -433,6 +419,40 @@ class _Body extends HookWidget {
         ),
       ),
     );
+  }
+
+  void _switchOnLocation(MapLocation? location) {
+    if (location != null) {
+      placeInfoBloc.add(
+        SelectLocationEvent(
+          location: location,
+        ),
+      );
+      mapSearchBloc.add(
+        SelectSuggestionEvent(
+          location: location,
+        ),
+      );
+    }
+  }
+
+  void _switchOnPoint(MapPoint? point) {
+    if (point != null) {
+      placeInfoBloc.add(
+        SelectLocationEvent(
+          location: MapLocation(
+            point: point,
+          ),
+        ),
+      );
+      mapSearchBloc.add(
+        SelectSuggestionEvent(
+          location: MapLocation(
+            point: point,
+          ),
+        ),
+      );
+    }
   }
 
   void _showBottomSheet() {

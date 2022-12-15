@@ -28,6 +28,13 @@ class MapLocation extends Equatable {
     return null;
   }
 
+  MapLocation clone() {
+    return MapLocation(
+      point: point?.clone(),
+      address: address?.clone(),
+    );
+  }
+
   @override
   List<Object?> get props => [
         point,

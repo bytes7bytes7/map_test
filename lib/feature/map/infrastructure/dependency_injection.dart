@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 
+import '../application/persistence/map_history_repository.dart';
 import '../application/persistence/map_search_repository.dart';
+import 'persistence/map_history_ram_repository.dart';
 import 'persistence/map_search_dev_repository.dart';
 
 void inject() {
@@ -11,5 +13,8 @@ void inject() {
       MapSearchDevRepository(
         dio: GetIt.instance.get<Dio>(),
       ),
+    )
+    ..registerSingleton<MapHistoryRepository>(
+      MapHistoryRAMRepository(),
     );
 }
