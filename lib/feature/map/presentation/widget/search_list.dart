@@ -9,12 +9,12 @@ class SearchList extends StatelessWidget {
     super.key,
     required this.maxHeight,
     required this.items,
-    this.errorMessage,
+    required this.errorMessage,
   });
 
   final double maxHeight;
   final List<Widget> items;
-  final String? errorMessage;
+  final String errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +43,9 @@ class SearchList extends StatelessWidget {
                 return items[index];
               },
             )
-          : errorMessage != null
+          : errorMessage.isNotEmpty
               ? Text(
-                  errorMessage!,
+                  errorMessage,
                   style: theme.textTheme.subtitle2?.copyWith(
                     color: theme.errorColor,
                   ),

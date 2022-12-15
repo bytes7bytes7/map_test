@@ -29,7 +29,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     emit(
       state.copyWith(
-        selectedMapLocation: Wrapped(event.location),
+        selectedLocation: Wrapped(event.location),
       ),
     );
   }

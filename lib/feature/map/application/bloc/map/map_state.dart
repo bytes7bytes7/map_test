@@ -4,7 +4,7 @@ class MapState extends Equatable with Loadable, Errorable {
   const MapState({
     this.isLoading = false,
     this.errorMessage = '',
-    this.selectedMapLocation,
+    this.selectedLocation,
   });
 
   @override
@@ -13,19 +13,19 @@ class MapState extends Equatable with Loadable, Errorable {
   @override
   final String errorMessage;
 
-  final MapLocation? selectedMapLocation;
+  final MapLocation? selectedLocation;
 
   MapState copyWith({
     bool? isLoading,
     String? errorMessage = '',
-    Wrapped<MapLocation>? selectedMapLocation,
+    Wrapped<MapLocation>? selectedLocation,
   }) {
     return MapState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
-      selectedMapLocation: selectedMapLocation != null
-          ? selectedMapLocation.value
-          : this.selectedMapLocation,
+      selectedLocation: selectedLocation != null
+          ? selectedLocation.value
+          : this.selectedLocation,
     );
   }
 
@@ -40,6 +40,6 @@ class MapState extends Equatable with Loadable, Errorable {
   List<Object?> get props => [
         isLoading,
         errorMessage,
-        selectedMapLocation,
+        selectedLocation,
       ];
 }

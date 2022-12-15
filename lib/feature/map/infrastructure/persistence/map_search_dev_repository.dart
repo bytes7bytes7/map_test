@@ -8,7 +8,8 @@ import '../../domain/map_location.dart';
 import '../../domain/map_point.dart';
 
 const _authority = 'photon.komoot.io';
-const _api = '/api';
+const _addressSuggestionEndpoint = '/api';
+const _pointSuggestionEndpoint = '/reverse';
 
 MapLocation mapLocationFromApi(Map<String, dynamic> json) {
   return MapLocation(
@@ -50,13 +51,36 @@ class MapSearchDevRepository implements MapSearchRepository {
     final response = await _dio.getUri(
       Uri.https(
         _authority,
-        _api,
+        _addressSuggestionEndpoint,
         {
           'q': query,
           'limit': limit == 0 ? '' : '$limit',
         },
       ),
     );
+    final json = response.data;
+
+    return (json['features'] as List)
+        .map<MapLocation>((e) => mapLocationFromApi(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<MapLocation>> getPointSuggestions({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final response = await _dio.getUri(
+      Uri.https(
+        _authority,
+        _pointSuggestionEndpoint,
+        {
+          'lat': '$latitude',
+          'lon': '$longitude',
+        },
+      ),
+    );
+
     final json = response.data;
 
     return (json['features'] as List)

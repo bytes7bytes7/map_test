@@ -87,4 +87,3 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
     );
   }
 }
-

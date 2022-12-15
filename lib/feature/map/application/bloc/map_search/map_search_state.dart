@@ -52,36 +52,7 @@ class MapSearchState extends Equatable with Loadable, Errorable {
       );
 
   String? get queryForSelectedLocation {
-    final location = selectedSuggestion;
-
-    if (location == null) {
-      return null;
-    }
-
-    final address = location.address;
-
-    if (address != null) {
-      final parts = [
-        address.name,
-        address.street,
-        address.city,
-        address.state,
-        address.country,
-      ].where((e) => e != null);
-
-      final result = parts.firstOrNull;
-      if (result != null) {
-        return result;
-      }
-    }
-
-    final point = location.point;
-
-    if (point != null) {
-      return '${point.latitude}, ${point.longitude}';
-    }
-
-    return '';
+    return selectedSuggestion?.beautifiedName;
   }
 
   @override
