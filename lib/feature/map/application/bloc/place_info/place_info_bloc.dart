@@ -27,6 +27,10 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
       _selectLocation,
       transformer: restartable(),
     );
+    on<ShowInfoEvent>(
+      _showInfo,
+      transformer: sequential(),
+    );
     on<HideInfoEvent>(
       _hideInfo,
       transformer: sequential(),
@@ -115,6 +119,17 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
             type: SelectType.selected,
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _showInfo(
+    ShowInfoEvent event,
+    Emitter<PlaceInfoState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        showInfo: true,
       ),
     );
   }

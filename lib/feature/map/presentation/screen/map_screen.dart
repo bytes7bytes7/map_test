@@ -143,6 +143,9 @@ class _Body extends HookWidget {
       children: [
         OSMFlutter(
           controller: mapController,
+          onGeoPointClicked: (point) {
+            placeInfoBloc.add(const ShowInfoEvent());
+          },
         ),
         SafeArea(
           child: BlocConsumer<MapSearchBloc, MapSearchState>(

@@ -32,6 +32,10 @@ class SelectLocationEvent extends PlaceInfoEvent {
   List<Object?> get props => [location];
 }
 
+class ShowInfoEvent extends PlaceInfoEvent {
+  const ShowInfoEvent();
+}
+
 class HideInfoEvent extends PlaceInfoEvent {
   const HideInfoEvent();
 }
