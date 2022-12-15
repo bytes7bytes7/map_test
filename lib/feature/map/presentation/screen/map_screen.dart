@@ -197,9 +197,11 @@ class _Body extends HookWidget {
                       items: state.searchSuggestions.map(
                         (e) {
                           final title = e.beautifiedName;
+                          final subtitle = e.address?.description;
 
                           return SearchSuggestionCard(
                             title: title ?? '???',
+                            subtitle: subtitle,
                             onPressed: () {
                               _selectSuggestion(e);
                             },

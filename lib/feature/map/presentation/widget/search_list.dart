@@ -36,9 +36,12 @@ class SearchList extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: items.isNotEmpty
-          ? ListView.builder(
+          ? ListView.separated(
               shrinkWrap: true,
               itemCount: items.length,
+              separatorBuilder: (context, index) {
+                return const Divider();
+              },
               itemBuilder: (context, index) {
                 return items[index];
               },
