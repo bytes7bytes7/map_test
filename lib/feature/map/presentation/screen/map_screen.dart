@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:get_it/get_it.dart';
+import 'package:logging/logging.dart';
 import 'package:osm_flutter_hooks/osm_flutter_hooks.dart';
 
 import '../../../common/presentation/hook/draggable_scrollable_controller.dart';
@@ -22,6 +23,7 @@ const _bottomSheetDuration = Duration(milliseconds: 300);
 const _bottomSheetBorderRadius = 10.0;
 const _bottomSheetPadding = 12.0;
 final _getIt = GetIt.instance;
+final _logger = Logger('$MapScreen');
 
 class MapScreen extends HookWidget {
   const MapScreen({super.key});
@@ -33,6 +35,7 @@ class MapScreen extends HookWidget {
     final searchFocus = useFocusNode();
     final searchController = useTextEditingController();
     final bottomSheetController = useDraggableScrollableController();
+    final bottomSheetSize = useValueNotifier(_initBottomSheetSize);
 
     useMapIsReady(
       controller: mapController,
@@ -79,6 +82,7 @@ class MapScreen extends HookWidget {
               mapSearchBloc: mapSearchBloc,
               placeInfoBloc: placeInfoBloc,
               bottomSheetController: bottomSheetController,
+              bottomSheetSize: bottomSheetSize,
             );
           },
         ),
@@ -97,6 +101,7 @@ class _Body extends HookWidget {
     required this.mapSearchBloc,
     required this.placeInfoBloc,
     required this.bottomSheetController,
+    required this.bottomSheetSize,
   });
 
   final MapController mapController;
@@ -107,6 +112,7 @@ class _Body extends HookWidget {
   final MapSearchBloc mapSearchBloc;
   final PlaceInfoBloc placeInfoBloc;
   final DraggableScrollableController bottomSheetController;
+  final ValueNotifier<double> bottomSheetSize;
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +132,14 @@ class _Body extends HookWidget {
 
       return () {
         mapController.listenerMapLongTapping.removeListener(_guessLocation);
+      };
+    });
+
+    useEffect(() {
+      bottomSheetController.addListener(_trackBottomSheetSize);
+
+      return () {
+        bottomSheetController.removeListener(_trackBottomSheetSize);
       };
     });
 
@@ -214,101 +228,109 @@ class _Body extends HookWidget {
             },
           ),
         ),
-        BlocConsumer<PlaceInfoBloc, PlaceInfoState>(
+        BlocListener<PlaceInfoBloc, PlaceInfoState>(
           listener: (context, state) {
-            if (state.errorMessage.isNotEmpty) {
-              _showError(context, error: state.errorMessage);
-            }
-
             if (state.showInfo) {
               _showBottomSheet();
             } else {
               _hideBottomSheet();
             }
-
-            final selectedLocation = state.selectedLocation?.mapLocation.point;
-            if (selectedLocation != null) {
-              _selectNewPoint(mapController, selectedLocation);
-            }
           },
-          builder: (context, state) {
-            return DraggableScrollableSheet(
-              controller: bottomSheetController,
-              initialChildSize: _initBottomSheetSize,
-              minChildSize: _minBottomSheetSize,
-              maxChildSize: _midBottomSheetSize,
-              snap: true,
-              snapSizes: const [
-                _minBottomSheetSize,
-                _midBottomSheetSize,
-              ],
-              builder: (context, scrollController) {
-                final isGuessed =
-                    state.selectedLocation?.type == SelectType.guessed;
+          child: BlocConsumer<PlaceInfoBloc, PlaceInfoState>(
+            listener: (context, state) {
+              if (state.errorMessage.isNotEmpty) {
+                _showError(context, error: state.errorMessage);
+              }
 
-                final location = state.selectedLocation;
+              final selectedLocation =
+                  state.selectedLocation?.mapLocation.point;
+              if (selectedLocation != null) {
+                _selectNewPoint(mapController, selectedLocation);
+              }
+            },
+            builder: (context, state) {
+              return DraggableScrollableSheet(
+                controller: bottomSheetController,
+                initialChildSize: bottomSheetSize.value,
+                minChildSize: _minBottomSheetSize,
+                maxChildSize: _midBottomSheetSize,
+                snap: true,
+                snapSizes: const [
+                  _minBottomSheetSize,
+                  _midBottomSheetSize,
+                ],
+                builder: (context, scrollController) {
+                  final isGuessed =
+                      state.selectedLocation?.type == SelectType.guessed;
 
-                final title = location?.mapLocation.beautifiedName;
-                final subtitle = title != null
-                    ? location?.mapLocation.address?.description
-                    : null;
+                  final location = state.selectedLocation;
 
-                return SingleChildScrollView(
-                  controller: scrollController,
-                  child: Container(
-                    height: size.height * _midBottomSheetSize,
-                    padding: const EdgeInsets.all(_bottomSheetPadding),
-                    decoration: BoxDecoration(
-                      color: theme.scaffoldBackgroundColor,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(
-                          _bottomSheetBorderRadius,
-                        ),
-                        topRight: Radius.circular(
-                          _bottomSheetBorderRadius,
+                  final title = location?.mapLocation.beautifiedName;
+                  final subtitle = title != null
+                      ? location?.mapLocation.address?.description
+                      : null;
+
+                  return SingleChildScrollView(
+                    controller: scrollController,
+                    child: Container(
+                      height: size.height * _midBottomSheetSize,
+                      padding: const EdgeInsets.all(_bottomSheetPadding),
+                      decoration: BoxDecoration(
+                        color: theme.scaffoldBackgroundColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(
+                            _bottomSheetBorderRadius,
+                          ),
+                          topRight: Radius.circular(
+                            _bottomSheetBorderRadius,
+                          ),
                         ),
                       ),
+                      child: state.isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(),
+                            )
+                          : isGuessed
+                              ? GuessedLocationCard(
+                                  title: title ?? '???',
+                                  subtitle: subtitle,
+                                  onSubmitted: () {},
+                                  onClosed: () {
+                                    placeInfoBloc.add(
+                                      const HideInfoEvent(),
+                                    );
+                                  },
+                                )
+                              : SelectedLocationCard(
+                                  title: title ?? '???',
+                                  subtitle: subtitle,
+                                  onClosed: () {
+                                    placeInfoBloc.add(
+                                      const HideInfoEvent(),
+                                    );
+                                  },
+                                ),
                     ),
-                    child: state.isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(),
-                          )
-                        : isGuessed
-                            ? GuessedLocationCard(
-                                title: title ?? '???',
-                                subtitle: subtitle,
-                                onSubmitted: () {},
-                                onClosed: () {
-                                  placeInfoBloc.add(
-                                    const HideInfoEvent(),
-                                  );
-                                },
-                              )
-                            : SelectedLocationCard(
-                                title: title ?? '???',
-                                subtitle: subtitle,
-                                onClosed: () {
-                                  placeInfoBloc.add(
-                                    const HideInfoEvent(),
-                                  );
-                                },
-                              ),
-                  ),
-                );
-              },
-            );
-          },
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
     );
   }
 
   void _unfocusSearch() {
+    _logger.info('unfocus search');
+
     isSearching.value = false;
     searchFocus.unfocus();
   }
 
   void _guessLocation() {
+    _logger.info('guess location');
+
     final point = mapController.listenerMapLongTapping.value;
 
     if (point != null) {
@@ -321,10 +343,16 @@ class _Body extends HookWidget {
     }
   }
 
+  void _trackBottomSheetSize() {
+    bottomSheetSize.value = bottomSheetController.size;
+  }
+
   Future<void> _selectNewPoint(
     MapController mapController,
     MapPoint point,
   ) async {
+    _logger.info('select new point');
+
     final points = await mapController.geopoints;
 
     for (final p in points) {
@@ -345,6 +373,8 @@ class _Body extends HookWidget {
     BuildContext context, {
     required String error,
   }) {
+    _logger.info('show error');
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: _snackBarDuration,
@@ -356,6 +386,8 @@ class _Body extends HookWidget {
   }
 
   void _showBottomSheet() {
+    _logger.info('show BottomSheet');
+
     const animateTo = _midBottomSheetSize;
 
     bottomSheetController.animateTo(
@@ -366,6 +398,8 @@ class _Body extends HookWidget {
   }
 
   void _hideBottomSheet() {
+    _logger.info('hide BottomSheet');
+
     const animateTo = _minBottomSheetSize;
 
     bottomSheetController.animateTo(

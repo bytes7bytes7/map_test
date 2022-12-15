@@ -19,6 +19,7 @@ dependencies:
   flutter_hooks: ^0.18.5+1
   flutter_osm_plugin: ^0.40.3+2
   get_it: ^7.2.0
+  logging: ^1.1.0
   modal_bottom_sheet: ^2.1.2
   osm_flutter_hooks: ^1.0.1
   rxdart: ^0.27.7
