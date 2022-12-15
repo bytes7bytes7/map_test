@@ -7,7 +7,7 @@ enum SelectType {
 
 class SelectedLocation extends Equatable {
   final MapPoint? point;
-  final MapLocation nearestLocation;
+  final MapLocation? nearestLocation;
   final SelectType type;
 
   const SelectedLocation({

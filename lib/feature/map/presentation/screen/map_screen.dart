@@ -226,134 +226,145 @@ class _Body extends HookWidget {
             },
           ),
         ),
-        BlocListener<PlaceInfoBloc, PlaceInfoState>(
-          listenWhen: (prev, curr) {
-            return prev.showInfo != curr.showInfo;
-          },
+        BlocConsumer<PlaceInfoBloc, PlaceInfoState>(
           listener: (context, state) {
+            if (state.errorMessage.isNotEmpty) {
+              _showError(context, error: state.errorMessage);
+            }
+
             if (state.showInfo) {
               _showBottomSheet();
             } else {
               _hideBottomSheet();
             }
+
+            final nearestPoint =
+                state.selectedLocation?.nearestLocation?.point;
+            final exactPoint = state.selectedLocation?.point;
+
+            if (nearestPoint != null) {
+              _selectNewPoint(nearestPoint);
+            } else if (exactPoint != null) {
+              _selectNewPoint(exactPoint);
+            }
           },
-          child: BlocConsumer<PlaceInfoBloc, PlaceInfoState>(
-            listener: (context, state) {
-              if (state.errorMessage.isNotEmpty) {
-                _showError(context, error: state.errorMessage);
-              }
+          builder: (context, state) {
+            return DraggableScrollableSheet(
+              controller: bottomSheetController,
+              initialChildSize: bottomSheetSize.value,
+              minChildSize: _minBottomSheetSize,
+              maxChildSize: _maxBottomSheetSize,
+              snap: true,
+              snapSizes: const [
+                _minBottomSheetSize,
+                _midBottomSheetSize,
+                _maxBottomSheetSize,
+              ],
+              builder: (context, scrollController) {
+                final isGuessed =
+                    state.selectedLocation?.type == SelectType.guessed;
 
-              final selectedLocation =
-                  state.selectedLocation?.nearestLocation.point;
-              if (selectedLocation != null) {
-                _selectNewPoint(selectedLocation);
-              }
-            },
-            builder: (context, state) {
-              return DraggableScrollableSheet(
-                controller: bottomSheetController,
-                initialChildSize: bottomSheetSize.value,
-                minChildSize: _minBottomSheetSize,
-                maxChildSize: _maxBottomSheetSize,
-                snap: true,
-                snapSizes: const [
-                  _minBottomSheetSize,
-                  _midBottomSheetSize,
-                  _maxBottomSheetSize,
-                ],
-                builder: (context, scrollController) {
-                  final isGuessed =
-                      state.selectedLocation?.type == SelectType.guessed;
+                final nearestPoint = state.selectedLocation?.nearestLocation;
+                final exactPoint = state.selectedLocation?.point;
 
-                  final location = state.selectedLocation;
-
-                  final title = location?.nearestLocation.beautifiedName;
-                  final subtitle = title != null
-                      ? location?.nearestLocation.address?.description
+                String? title;
+                String? subtitle;
+                if (nearestPoint != null) {
+                  title = nearestPoint.beautifiedName;
+                  subtitle = title != null
+                      ? nearestPoint.address?.description
                       : null;
+                } else if (exactPoint != null) {
+                  title = exactPoint.beautifiedName;
+                }
 
-                  return SingleChildScrollView(
-                    controller: scrollController,
-                    child: Container(
-                      height: size.height * _maxBottomSheetSize,
-                      padding: const EdgeInsets.all(_bottomSheetPadding),
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(
-                            _bottomSheetBorderRadius,
-                          ),
-                          topRight: Radius.circular(
-                            _bottomSheetBorderRadius,
-                          ),
+                return SingleChildScrollView(
+                  controller: scrollController,
+                  child: Container(
+                    height: size.height * _maxBottomSheetSize,
+                    padding: const EdgeInsets.all(_bottomSheetPadding),
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(
+                          _bottomSheetBorderRadius,
+                        ),
+                        topRight: Radius.circular(
+                          _bottomSheetBorderRadius,
                         ),
                       ),
-                      child: state.isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(),
-                            )
-                          : isGuessed
-                              ? GuessedLocationCard(
-                                  title: title ?? '???',
-                                  subtitle: subtitle,
-                                  onSubmitted: () {
-                                    final location =
-                                        state.selectedLocation?.nearestLocation;
-
-                                    if (location != null) {
-                                      placeInfoBloc.add(
-                                        SelectLocationEvent(
-                                          location: location,
-                                        ),
-                                      );
-                                      mapSearchBloc.add(
-                                        SelectSuggestionEvent(
-                                          location: location,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  onCanceled: () {
-                                    final point = state.selectedLocation?.point;
-
-                                    if (point != null) {
-                                      placeInfoBloc.add(
-                                        SelectLocationEvent(
-                                          location: MapLocation(
-                                            point: point,
-                                          ),
-                                        ),
-                                      );
-                                      mapSearchBloc.add(
-                                        SelectSuggestionEvent(
-                                          location: MapLocation(
-                                            point: point,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  onClosed: () {
-                                    placeInfoBloc.add(
-                                      const HideInfoEvent(),
-                                    );
-                                  },
-                                )
-                              : SelectedLocationCard(
-                                  title: title ?? '???',
-                                  subtitle: subtitle,
-                                  onClosed: () {
-                                    placeInfoBloc.add(
-                                      const HideInfoEvent(),
-                                    );
-                                  },
-                                ),
                     ),
-                  );
-                },
-              );
-            },
-          ),
+                    child: state.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : isGuessed
+                            ? GuessedLocationCard(
+                                title: title ?? '???',
+                                subtitle: subtitle,
+                                onPrimary: nearestPoint != null
+                                    ? () {
+                                        final location = state
+                                            .selectedLocation
+                                            ?.nearestLocation;
+
+                                        if (location != null) {
+                                          placeInfoBloc.add(
+                                            SelectLocationEvent(
+                                              location: location,
+                                            ),
+                                          );
+                                          mapSearchBloc.add(
+                                            SelectSuggestionEvent(
+                                              location: location,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : null,
+                                onSecondary: exactPoint != null
+                                    ? () {
+                                        final point =
+                                            state.selectedLocation?.point;
+
+                                        if (point != null) {
+                                          placeInfoBloc.add(
+                                            SelectLocationEvent(
+                                              location: MapLocation(
+                                                point: point,
+                                              ),
+                                            ),
+                                          );
+                                          mapSearchBloc.add(
+                                            SelectSuggestionEvent(
+                                              location: MapLocation(
+                                                point: point,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : null,
+                                onClosed: () {
+                                  placeInfoBloc.add(
+                                    const HideInfoEvent(),
+                                  );
+                                },
+                              )
+                            : SelectedLocationCard(
+                                title: title ?? '???',
+                                subtitle: subtitle,
+                                onClosed: () {
+                                  placeInfoBloc.add(
+                                    const HideInfoEvent(),
+                                  );
+                                },
+                              ),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ],
     );

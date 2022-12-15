@@ -9,16 +9,16 @@ class GuessedLocationCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.onClosed,
-    required this.onSubmitted,
-    required this.onCanceled,
+    this.onPrimary,
+    this.onSecondary,
     this.subtitle,
   });
 
   final String title;
   final String? subtitle;
   final VoidCallback onClosed;
-  final VoidCallback onSubmitted;
-  final VoidCallback onCanceled;
+  final VoidCallback? onPrimary;
+  final VoidCallback? onSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -52,34 +52,36 @@ class GuessedLocationCard extends StatelessWidget {
               style: theme.textTheme.bodyText2,
             ),
           ),
-        Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(
-            vertical: _vertPadding,
-          ),
-          child: ElevatedButton(
-            onPressed: onSubmitted,
-            child: const Center(
-              child: Text(
-                'Выбрать предложенную точку',
+        if (onPrimary != null)
+          Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(
+              vertical: _vertPadding,
+            ),
+            child: ElevatedButton(
+              onPressed: onPrimary,
+              child: const Center(
+                child: Text(
+                  'Выбрать предложенную точку',
+                ),
               ),
             ),
           ),
-        ),
-        Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(
-            vertical: _vertPadding,
-          ),
-          child: ElevatedButton(
-            onPressed: onCanceled,
-            child: const Center(
-              child: Text(
-                'Выбрать точные координаты',
+        if (onSecondary != null)
+          Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(
+              vertical: _vertPadding,
+            ),
+            child: ElevatedButton(
+              onPressed: onSecondary,
+              child: const Center(
+                child: Text(
+                  'Выбрать точные координаты',
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

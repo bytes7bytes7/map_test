@@ -71,8 +71,18 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
         );
       } else {
         emit(
-          state.error(
-            'Точка не найдена',
+          state.copyWith(
+            isLoading: false,
+            selectedLocation: Wrapped(
+              SelectedLocation(
+                point: MapPoint(
+                  latitude: event.latitude,
+                  longitude: event.longitude,
+                ),
+                nearestLocation: null,
+                type: SelectType.guessed,
+              ),
+            ),
           ),
         );
       }
