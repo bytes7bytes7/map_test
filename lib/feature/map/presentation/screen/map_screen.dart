@@ -64,18 +64,8 @@ class MapScreen extends HookWidget {
             ),
           ),
         ],
-        child: BlocConsumer<MapBloc, MapState>(
-          listener: (context, state) {
-            final point = state.selectedLocation?.point;
-            if (point != null) {
-              _selectNewPoint(mapController, point);
-            }
-
-            if (state.errorMessage.isNotEmpty) {
-              _showError(context, error: state.errorMessage);
-            }
-          },
-          builder: (context, state) {
+        child: Builder(
+          builder: (context) {
             final mapBloc = context.read<MapBloc>();
             final mapSearchBloc = context.read<MapSearchBloc>();
             final placeInfoBloc = context.read<PlaceInfoBloc>();
@@ -91,40 +81,6 @@ class MapScreen extends HookWidget {
               bottomSheetController: bottomSheetController,
             );
           },
-        ),
-      ),
-    );
-  }
-
-  Future<void> _selectNewPoint(
-    MapController mapController,
-    MapPoint point,
-  ) async {
-    final points = await mapController.geopoints;
-
-    for (final p in points) {
-      await mapController.removeMarker(p);
-    }
-
-    await mapController.changeLocation(
-      GeoPoint(
-        latitude: point.latitude,
-        longitude: point.longitude,
-      ),
-    );
-
-    await mapController.setZoom(zoomLevel: _zoomLevel);
-  }
-
-  void _showError(
-    BuildContext context, {
-    required String error,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: _snackBarDuration,
-        content: Text(
-          error,
         ),
       ),
     );
@@ -181,6 +137,10 @@ class _Body extends HookWidget {
         SafeArea(
           child: BlocConsumer<MapSearchBloc, MapSearchState>(
             listener: (context, state) {
+              if (state.errorMessage.isNotEmpty) {
+                _showError(context, error: state.errorMessage);
+              }
+
               if (state.updatedSuggestion) {
                 final query = state.queryForSelectedLocation;
 
@@ -238,7 +198,7 @@ class _Body extends HookWidget {
                                   location: e,
                                 ),
                               );
-                              mapBloc.add(
+                              placeInfoBloc.add(
                                 SelectLocationEvent(
                                   location: e,
                                 ),
@@ -256,10 +216,19 @@ class _Body extends HookWidget {
         ),
         BlocConsumer<PlaceInfoBloc, PlaceInfoState>(
           listener: (context, state) {
+            if (state.errorMessage.isNotEmpty) {
+              _showError(context, error: state.errorMessage);
+            }
+
             if (state.showInfo) {
               _showBottomSheet();
             } else {
               _hideBottomSheet();
+            }
+
+            final selectedLocation = state.selectedLocation?.mapLocation.point;
+            if (selectedLocation != null) {
+              _selectNewPoint(mapController, selectedLocation);
             }
           },
           builder: (context, state) {
@@ -274,11 +243,15 @@ class _Body extends HookWidget {
                 _midBottomSheetSize,
               ],
               builder: (context, scrollController) {
-                final location = state.guessedLocation;
+                final isGuessed =
+                    state.selectedLocation?.type == SelectType.guessed;
 
-                final title = location?.beautifiedName;
-                final subtitle =
-                    title != null ? location?.address?.description : null;
+                final location = state.selectedLocation;
+
+                final title = location?.mapLocation.beautifiedName;
+                final subtitle = title != null
+                    ? location?.mapLocation.address?.description
+                    : null;
 
                 return SingleChildScrollView(
                   controller: scrollController,
@@ -300,38 +273,26 @@ class _Body extends HookWidget {
                         ? const Center(
                             child: CircularProgressIndicator(),
                           )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  if (title != null)
-                                    Text(
-                                      title,
-                                      style: theme.textTheme.headline6,
-                                    ),
-                                  const Spacer(),
-                                  RoundedIconButton(
-                                    icon: Icons.close,
-                                    foregroundColor:
-                                        theme.colorScheme.onBackground,
-                                    backgroundColor:
-                                        theme.colorScheme.background,
-                                    onPressed: () {
-                                      placeInfoBloc.add(
-                                        const HideInfoEvent(),
-                                      );
-                                    },
-                                  ),
-                                ],
+                        : isGuessed
+                            ? GuessedLocationCard(
+                                title: title ?? '???',
+                                subtitle: subtitle,
+                                onSubmitted: () {},
+                                onClosed: () {
+                                  placeInfoBloc.add(
+                                    const HideInfoEvent(),
+                                  );
+                                },
+                              )
+                            : SelectedLocationCard(
+                                title: title ?? '???',
+                                subtitle: subtitle,
+                                onClosed: () {
+                                  placeInfoBloc.add(
+                                    const HideInfoEvent(),
+                                  );
+                                },
                               ),
-                              if (subtitle != null)
-                                Text(
-                                  subtitle,
-                                  style: theme.textTheme.bodyText2,
-                                ),
-                            ],
-                          ),
                   ),
                 );
               },
@@ -358,6 +319,40 @@ class _Body extends HookWidget {
         ),
       );
     }
+  }
+
+  Future<void> _selectNewPoint(
+    MapController mapController,
+    MapPoint point,
+  ) async {
+    final points = await mapController.geopoints;
+
+    for (final p in points) {
+      await mapController.removeMarker(p);
+    }
+
+    await mapController.changeLocation(
+      GeoPoint(
+        latitude: point.latitude,
+        longitude: point.longitude,
+      ),
+    );
+
+    await mapController.setZoom(zoomLevel: _zoomLevel);
+  }
+
+  void _showError(
+    BuildContext context, {
+    required String error,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: _snackBarDuration,
+        content: Text(
+          error,
+        ),
+      ),
+    );
   }
 
   void _showBottomSheet() {

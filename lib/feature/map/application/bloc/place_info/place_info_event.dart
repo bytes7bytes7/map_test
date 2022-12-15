@@ -23,6 +23,15 @@ class GuessLocationEvent extends PlaceInfoEvent {
       ];
 }
 
+class SelectLocationEvent extends PlaceInfoEvent {
+  const SelectLocationEvent({required this.location});
+
+  final MapLocation location;
+
+  @override
+  List<Object?> get props => [location];
+}
+
 class HideInfoEvent extends PlaceInfoEvent {
   const HideInfoEvent();
 }

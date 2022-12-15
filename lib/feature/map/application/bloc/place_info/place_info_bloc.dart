@@ -22,6 +22,10 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
       _guessLocation,
       transformer: restartable(),
     );
+    on<SelectLocationEvent>(
+      _selectLocation,
+      transformer: restartable(),
+    );
     on<HideInfoEvent>(
       _hideInfo,
       transformer: sequential(),
@@ -46,13 +50,27 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
         longitude: event.longitude,
       );
 
-      emit(
-        state.copyWith(
-          isLoading: false,
-          showInfo: true,
-          guessedLocation: Wrapped(suggestions.firstOrNull),
-        ),
-      );
+      final first = suggestions.firstOrNull;
+
+      if (first != null) {
+        emit(
+          state.copyWith(
+            isLoading: false,
+            selectedLocation: Wrapped(
+              SelectedLocation(
+                mapLocation: first,
+                type: SelectType.guessed,
+              ),
+            ),
+          ),
+        );
+      } else {
+        emit(
+          state.error(
+            'Точка не найдена',
+          ),
+        );
+      }
     } catch (e) {
       emit(
         state.error(
@@ -60,6 +78,29 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
         ),
       );
     }
+  }
+
+  Future<void> _selectLocation(
+    SelectLocationEvent event,
+    Emitter<PlaceInfoState> emit,
+  ) async {
+    emit(
+      state.loading().copyWith(
+            showInfo: true,
+          ),
+    );
+
+    emit(
+      state.copyWith(
+        isLoading: false,
+        selectedLocation: Wrapped(
+          SelectedLocation(
+            mapLocation: event.location,
+            type: SelectType.selected,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _hideInfo(
