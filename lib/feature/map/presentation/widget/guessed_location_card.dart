@@ -10,6 +10,7 @@ class GuessedLocationCard extends StatelessWidget {
     required this.title,
     required this.onClosed,
     required this.onSubmitted,
+    required this.onCanceled,
     this.subtitle,
   });
 
@@ -17,6 +18,7 @@ class GuessedLocationCard extends StatelessWidget {
   final String? subtitle;
   final VoidCallback onClosed;
   final VoidCallback onSubmitted;
+  final VoidCallback onCanceled;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,21 @@ class GuessedLocationCard extends StatelessWidget {
             onPressed: onSubmitted,
             child: const Center(
               child: Text(
-                'Подтвердить',
+                'Выбрать предложенную точку',
+              ),
+            ),
+          ),
+        ),
+        Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(
+            vertical: _vertPadding,
+          ),
+          child: ElevatedButton(
+            onPressed: onCanceled,
+            child: const Center(
+              child: Text(
+                'Выбрать точные координаты',
               ),
             ),
           ),

@@ -6,17 +6,20 @@ enum SelectType {
 }
 
 class SelectedLocation extends Equatable {
-  final MapLocation mapLocation;
+  final MapPoint? point;
+  final MapLocation nearestLocation;
   final SelectType type;
 
   const SelectedLocation({
-    required this.mapLocation,
+    required this.point,
+    required this.nearestLocation,
     required this.type,
   });
 
   @override
   List<Object?> get props => [
-        mapLocation,
+        point,
+        nearestLocation,
         type,
       ];
 }
@@ -57,9 +60,9 @@ class PlaceInfoState extends Equatable with Loadable, Errorable {
 
   PlaceInfoState loading() => copyWith(isLoading: true);
 
-  PlaceInfoState error(String error) => copyWith(
+  PlaceInfoState error(String errorMessage) => copyWith(
         isLoading: false,
-        errorMessage: error,
+        errorMessage: errorMessage,
       );
 
   @override

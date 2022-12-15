@@ -7,6 +7,7 @@ import '../../../../common/application/bloc/errorable.dart';
 import '../../../../common/application/bloc/loadable.dart';
 import '../../../../common/wrapped.dart';
 import '../../../domain/map_location.dart';
+import '../../../domain/map_point.dart';
 import '../../persistence/map_search_repository.dart';
 
 part 'place_info_event.dart';
@@ -58,7 +59,11 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
             isLoading: false,
             selectedLocation: Wrapped(
               SelectedLocation(
-                mapLocation: first,
+                point: MapPoint(
+                  latitude: event.latitude,
+                  longitude: event.longitude,
+                ),
+                nearestLocation: first,
                 type: SelectType.guessed,
               ),
             ),
@@ -95,7 +100,8 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
         isLoading: false,
         selectedLocation: Wrapped(
           SelectedLocation(
-            mapLocation: event.location,
+            point: event.location.point,
+            nearestLocation: event.location,
             type: SelectType.selected,
           ),
         ),

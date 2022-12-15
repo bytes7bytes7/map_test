@@ -10,6 +10,7 @@ import '../../../common/presentation/hook/draggable_scrollable_controller.dart';
 import '../../application/bloc/map_search/map_search_bloc.dart';
 import '../../application/bloc/place_info/place_info_bloc.dart';
 import '../../application/persistence/map_search_repository.dart';
+import '../../domain/map_location.dart';
 import '../../domain/map_point.dart';
 import '../widget/widget.dart';
 
@@ -17,7 +18,7 @@ const _zoomLevel = 15.0;
 const _snackBarDuration = Duration(seconds: 3);
 const _initBottomSheetSize = 0.0;
 const _minBottomSheetSize = 0.0;
-const _midBottomSheetSize = 0.2;
+const _midBottomSheetSize = 0.3;
 const _maxBottomSheetSize = 0.7;
 const _bottomSheetDuration = Duration(milliseconds: 300);
 const _bottomSheetBorderRadius = 10.0;
@@ -38,9 +39,6 @@ class MapScreen extends HookWidget {
     final searchController = useTextEditingController();
     final bottomSheetController = useDraggableScrollableController();
     final bottomSheetSize = useValueNotifier(_initBottomSheetSize);
-
-    // await mapController.currentLocation();
-    // await mapController.setZoom(zoomLevel: _zoomLevel);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -76,6 +74,14 @@ class MapScreen extends HookWidget {
             );
           },
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.my_location),
+        onPressed: () {
+          mapController
+            ..currentLocation()
+            ..setZoom(zoomLevel: _zoomLevel);
+        },
       ),
     );
   }
@@ -162,6 +168,10 @@ class _Body extends HookWidget {
                     child: SearchBar(
                       controller: searchController,
                       focusNode: searchFocus,
+                      onClear: () {
+                        searchController.clear();
+                        _unfocusSearch();
+                      },
                       onChanged: (query) {
                         mapSearchBloc.add(
                           SetQueryEvent(
@@ -234,9 +244,9 @@ class _Body extends HookWidget {
               }
 
               final selectedLocation =
-                  state.selectedLocation?.mapLocation.point;
+                  state.selectedLocation?.nearestLocation.point;
               if (selectedLocation != null) {
-                _selectNewPoint(mapController, selectedLocation);
+                _selectNewPoint(selectedLocation);
               }
             },
             builder: (context, state) {
@@ -257,9 +267,9 @@ class _Body extends HookWidget {
 
                   final location = state.selectedLocation;
 
-                  final title = location?.mapLocation.beautifiedName;
+                  final title = location?.nearestLocation.beautifiedName;
                   final subtitle = title != null
-                      ? location?.mapLocation.address?.description
+                      ? location?.nearestLocation.address?.description
                       : null;
 
                   return SingleChildScrollView(
@@ -286,7 +296,43 @@ class _Body extends HookWidget {
                               ? GuessedLocationCard(
                                   title: title ?? '???',
                                   subtitle: subtitle,
-                                  onSubmitted: () {},
+                                  onSubmitted: () {
+                                    final location =
+                                        state.selectedLocation?.nearestLocation;
+
+                                    if (location != null) {
+                                      placeInfoBloc.add(
+                                        SelectLocationEvent(
+                                          location: location,
+                                        ),
+                                      );
+                                      mapSearchBloc.add(
+                                        SelectSuggestionEvent(
+                                          location: location,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  onCanceled: () {
+                                    final point = state.selectedLocation?.point;
+
+                                    if (point != null) {
+                                      placeInfoBloc.add(
+                                        SelectLocationEvent(
+                                          location: MapLocation(
+                                            point: point,
+                                          ),
+                                        ),
+                                      );
+                                      mapSearchBloc.add(
+                                        SelectSuggestionEvent(
+                                          location: MapLocation(
+                                            point: point,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
                                   onClosed: () {
                                     placeInfoBloc.add(
                                       const HideInfoEvent(),
@@ -343,10 +389,7 @@ class _Body extends HookWidget {
     }
   }
 
-  Future<void> _selectNewPoint(
-    MapController mapController,
-    MapPoint point,
-  ) async {
+  Future<void> _selectNewPoint(MapPoint point) async {
     _logger.info('select new point');
 
     final points = await mapController.geopoints;

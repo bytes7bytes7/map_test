@@ -33,4 +33,8 @@ final lightTheme = ThemeData.light(
       borderSide: BorderSide.none,
     ),
   ),
+  floatingActionButtonTheme: const FloatingActionButtonThemeData(
+    backgroundColor: Colors.white,
+    foregroundColor: Colors.black,
+  ),
 );
