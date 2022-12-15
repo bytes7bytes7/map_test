@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class MapAddress extends Equatable {
   const MapAddress({
     this.postcode,
+    this.houseNumber,
     this.name,
     this.street,
     this.city,
@@ -12,15 +13,27 @@ class MapAddress extends Equatable {
   });
 
   final String? postcode;
+  final String? houseNumber;
   final String? name;
   final String? street;
   final String? city;
   final String? state;
   final String? country;
 
+  String? get beautifiedHouseNumber {
+    final number = houseNumber;
+
+    if (number == null) {
+      return null;
+    }
+
+    return 'Дом $number';
+  }
+
   String? get beautifiedName {
     final parts = [
       name,
+      beautifiedHouseNumber,
       street,
       city,
       state,
@@ -38,6 +51,7 @@ class MapAddress extends Equatable {
   String? get description {
     final parts = [
       name,
+      beautifiedHouseNumber,
       street,
       city,
       state,
@@ -56,6 +70,7 @@ class MapAddress extends Equatable {
   @override
   List<Object?> get props => [
         postcode,
+        houseNumber,
         name,
         street,
         city,

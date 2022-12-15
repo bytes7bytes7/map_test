@@ -28,6 +28,7 @@ MapPoint mapPointFromApi(Map<String, dynamic> json) {
 MapAddress mapAddressFromApi(Map<String, dynamic> json) {
   return MapAddress(
     postcode: json['postcode'],
+    houseNumber: json['housenumber'],
     name: json['name'],
     street: json['street'],
     city: json['city'],
