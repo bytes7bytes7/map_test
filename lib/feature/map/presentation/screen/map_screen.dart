@@ -19,6 +19,7 @@ const _snackBarDuration = Duration(seconds: 3);
 const _initBottomSheetSize = 0.0;
 const _minBottomSheetSize = 0.0;
 const _midBottomSheetSize = 0.2;
+const _maxBottomSheetSize = 0.7;
 const _bottomSheetDuration = Duration(milliseconds: 300);
 const _bottomSheetBorderRadius = 10.0;
 const _bottomSheetPadding = 12.0;
@@ -229,6 +230,9 @@ class _Body extends HookWidget {
           ),
         ),
         BlocListener<PlaceInfoBloc, PlaceInfoState>(
+          listenWhen: (prev, curr) {
+            return prev.showInfo != curr.showInfo;
+          },
           listener: (context, state) {
             if (state.showInfo) {
               _showBottomSheet();
@@ -253,11 +257,12 @@ class _Body extends HookWidget {
                 controller: bottomSheetController,
                 initialChildSize: bottomSheetSize.value,
                 minChildSize: _minBottomSheetSize,
-                maxChildSize: _midBottomSheetSize,
+                maxChildSize: _maxBottomSheetSize,
                 snap: true,
                 snapSizes: const [
                   _minBottomSheetSize,
                   _midBottomSheetSize,
+                  _maxBottomSheetSize,
                 ],
                 builder: (context, scrollController) {
                   final isGuessed =
@@ -273,7 +278,7 @@ class _Body extends HookWidget {
                   return SingleChildScrollView(
                     controller: scrollController,
                     child: Container(
-                      height: size.height * _midBottomSheetSize,
+                      height: size.height * _maxBottomSheetSize,
                       padding: const EdgeInsets.all(_bottomSheetPadding),
                       decoration: BoxDecoration(
                         color: theme.scaffoldBackgroundColor,
@@ -345,6 +350,10 @@ class _Body extends HookWidget {
 
   void _trackBottomSheetSize() {
     bottomSheetSize.value = bottomSheetController.size;
+
+    if (bottomSheetSize.value == 0) {
+      placeInfoBloc.add(const HideInfoEvent());
+    }
   }
 
   Future<void> _selectNewPoint(

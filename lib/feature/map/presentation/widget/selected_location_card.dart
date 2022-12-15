@@ -25,11 +25,12 @@ class SelectedLocationCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              title,
-              style: theme.textTheme.headline6,
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.headline6,
+              ),
             ),
-            const Spacer(),
             RoundedIconButton(
               icon: Icons.close,
               foregroundColor: theme.colorScheme.onBackground,
@@ -39,9 +40,11 @@ class SelectedLocationCard extends StatelessWidget {
           ],
         ),
         if (subtitleText != null)
-          Text(
-            subtitleText,
-            style: theme.textTheme.bodyText2,
+          Flexible(
+            child: Text(
+              subtitleText,
+              style: theme.textTheme.bodyText2,
+            ),
           ),
       ],
     );
