@@ -7,7 +7,6 @@ import 'package:logging/logging.dart';
 import 'package:osm_flutter_hooks/osm_flutter_hooks.dart';
 
 import '../../../common/presentation/hook/draggable_scrollable_controller.dart';
-import '../../application/bloc/map/map_bloc.dart';
 import '../../application/bloc/map_search/map_search_bloc.dart';
 import '../../application/bloc/place_info/place_info_bloc.dart';
 import '../../application/persistence/map_search_repository.dart';
@@ -31,30 +30,22 @@ class MapScreen extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mapController = useMapController();
+    final mapController = useMapController(
+      initMapWithUserPosition: false,
+    );
     final isSearching = useValueNotifier(false);
     final searchFocus = useFocusNode();
     final searchController = useTextEditingController();
     final bottomSheetController = useDraggableScrollableController();
     final bottomSheetSize = useValueNotifier(_initBottomSheetSize);
 
-    useMapIsReady(
-      controller: mapController,
-      mapIsReady: () async {
-        await mapController.currentLocation();
-        await mapController.setZoom(zoomLevel: _zoomLevel);
-      },
-    );
+    // await mapController.currentLocation();
+    // await mapController.setZoom(zoomLevel: _zoomLevel);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: MultiBlocProvider(
         providers: [
-          BlocProvider(
-            create: (context) => MapBloc(
-              const MapState(),
-            ),
-          ),
           BlocProvider(
             create: (context) => MapSearchBloc(
               const MapSearchState(),
@@ -70,7 +61,6 @@ class MapScreen extends HookWidget {
         ],
         child: Builder(
           builder: (context) {
-            final mapBloc = context.read<MapBloc>();
             final mapSearchBloc = context.read<MapSearchBloc>();
             final placeInfoBloc = context.read<PlaceInfoBloc>();
 
@@ -79,7 +69,6 @@ class MapScreen extends HookWidget {
               searchController: searchController,
               isSearching: isSearching,
               searchFocus: searchFocus,
-              mapBloc: mapBloc,
               mapSearchBloc: mapSearchBloc,
               placeInfoBloc: placeInfoBloc,
               bottomSheetController: bottomSheetController,
@@ -98,7 +87,6 @@ class _Body extends HookWidget {
     required this.searchController,
     required this.isSearching,
     required this.searchFocus,
-    required this.mapBloc,
     required this.mapSearchBloc,
     required this.placeInfoBloc,
     required this.bottomSheetController,
@@ -109,7 +97,6 @@ class _Body extends HookWidget {
   final TextEditingController searchController;
   final ValueNotifier<bool> isSearching;
   final FocusNode searchFocus;
-  final MapBloc mapBloc;
   final MapSearchBloc mapSearchBloc;
   final PlaceInfoBloc placeInfoBloc;
   final DraggableScrollableController bottomSheetController;
