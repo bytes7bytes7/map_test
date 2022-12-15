@@ -429,7 +429,7 @@ class _Body extends HookWidget {
         ),
       );
       mapSearchBloc.add(
-        SelectSuggestionEvent(
+        SelectPickedLocationEvent(
           location: location,
         ),
       );
@@ -446,7 +446,7 @@ class _Body extends HookWidget {
         ),
       );
       mapSearchBloc.add(
-        SelectSuggestionEvent(
+        SelectPickedLocationEvent(
           location: MapLocation(
             point: point,
           ),

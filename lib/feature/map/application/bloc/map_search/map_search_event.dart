@@ -27,6 +27,15 @@ class SelectSuggestionEvent extends MapSearchEvent {
   List<Object?> get props => [location];
 }
 
+class SelectPickedLocationEvent extends MapSearchEvent {
+  const SelectPickedLocationEvent({required this.location});
+
+  final MapLocation location;
+
+  @override
+  List<Object?> get props => [location];
+}
+
 class LoadHistoryEvent extends MapSearchEvent {
   const LoadHistoryEvent();
 }

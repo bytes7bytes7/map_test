@@ -38,6 +38,10 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
       _loadHistory,
       transformer: droppable(),
     );
+    on<SelectPickedLocationEvent>(
+      _selectPickedLocation,
+      transformer: restartable(),
+    );
   }
 
   final MapSearchRepository _mapSearchRepository;
@@ -129,6 +133,30 @@ class MapSearchBloc extends Bloc<MapSearchEvent, MapSearchState> {
     } catch (e) {
       emit(
         state.error('Не удалось загрузить историю'),
+      );
+    }
+  }
+
+  Future<void> _selectPickedLocation(
+    SelectPickedLocationEvent event,
+    Emitter<MapSearchState> emit,
+  ) async {
+    try {
+      await _mapHistoryRepository.saveLocation(event.location);
+
+      emit(
+        state.copyWith(
+          isLoading: false,
+          selectedSuggestion: Wrapped(event.location),
+          updatedSuggestion: true,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.error('Не удалось обновить историю').copyWith(
+              selectedSuggestion: Wrapped(event.location),
+              updatedSuggestion: true,
+            ),
       );
     }
   }
