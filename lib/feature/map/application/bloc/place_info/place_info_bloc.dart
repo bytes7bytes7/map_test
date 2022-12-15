@@ -22,6 +22,10 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
       _guessLocation,
       transformer: restartable(),
     );
+    on<HideInfoEvent>(
+      _hideInfo,
+      transformer: sequential(),
+    );
   }
 
   final MapSearchRepository _mapSearchRepository;
@@ -30,7 +34,11 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
     GuessLocationEvent event,
     Emitter<PlaceInfoState> emit,
   ) async {
-    emit(state.loading());
+    emit(
+      state.loading().copyWith(
+            showInfo: true,
+          ),
+    );
 
     try {
       final suggestions = await _mapSearchRepository.getPointSuggestions(
@@ -41,6 +49,7 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
       emit(
         state.copyWith(
           isLoading: false,
+          showInfo: true,
           guessedLocation: Wrapped(suggestions.firstOrNull),
         ),
       );
@@ -51,5 +60,16 @@ class PlaceInfoBloc extends Bloc<PlaceInfoEvent, PlaceInfoState> {
         ),
       );
     }
+  }
+
+  Future<void> _hideInfo(
+    HideInfoEvent event,
+    Emitter<PlaceInfoState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        showInfo: false,
+      ),
+    );
   }
 }

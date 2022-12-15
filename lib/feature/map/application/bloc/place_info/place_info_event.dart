@@ -18,7 +18,11 @@ class GuessLocationEvent extends PlaceInfoEvent {
 
   @override
   List<Object?> get props => [
-    latitude,
-    longitude,
-  ];
+        latitude,
+        longitude,
+      ];
+}
+
+class HideInfoEvent extends PlaceInfoEvent {
+  const HideInfoEvent();
 }

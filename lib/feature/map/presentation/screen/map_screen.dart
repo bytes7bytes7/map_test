@@ -15,9 +15,9 @@ import '../widget/widget.dart';
 
 const _zoomLevel = 15.0;
 const _snackBarDuration = Duration(seconds: 3);
+const _initBottomSheetSize = 0.0;
 const _minBottomSheetSize = 0.0;
 const _midBottomSheetSize = 0.2;
-const _maxBottomSheetSize = 0.7;
 const _bottomSheetDuration = Duration(milliseconds: 300);
 const _bottomSheetBorderRadius = 10.0;
 const _bottomSheetPadding = 12.0;
@@ -256,7 +256,7 @@ class _Body extends HookWidget {
         ),
         BlocConsumer<PlaceInfoBloc, PlaceInfoState>(
           listener: (context, state) {
-            if (state.guessedLocation != null) {
+            if (state.showInfo) {
               _showBottomSheet();
             } else {
               _hideBottomSheet();
@@ -265,14 +265,13 @@ class _Body extends HookWidget {
           builder: (context, state) {
             return DraggableScrollableSheet(
               controller: bottomSheetController,
-              initialChildSize: _minBottomSheetSize,
+              initialChildSize: _initBottomSheetSize,
               minChildSize: _minBottomSheetSize,
-              maxChildSize: _maxBottomSheetSize,
+              maxChildSize: _midBottomSheetSize,
               snap: true,
               snapSizes: const [
                 _minBottomSheetSize,
                 _midBottomSheetSize,
-                _maxBottomSheetSize,
               ],
               builder: (context, scrollController) {
                 final location = state.guessedLocation;
@@ -284,7 +283,7 @@ class _Body extends HookWidget {
                 return SingleChildScrollView(
                   controller: scrollController,
                   child: Container(
-                    height: size.height * _maxBottomSheetSize,
+                    height: size.height * _midBottomSheetSize,
                     padding: const EdgeInsets.all(_bottomSheetPadding),
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
@@ -297,32 +296,42 @@ class _Body extends HookWidget {
                         ),
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            if (title != null)
-                              Text(
-                                title,
-                                style: theme.textTheme.headline6,
+                    child: state.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  if (title != null)
+                                    Text(
+                                      title,
+                                      style: theme.textTheme.headline6,
+                                    ),
+                                  const Spacer(),
+                                  RoundedIconButton(
+                                    icon: Icons.close,
+                                    foregroundColor:
+                                        theme.colorScheme.onBackground,
+                                    backgroundColor:
+                                        theme.colorScheme.background,
+                                    onPressed: () {
+                                      placeInfoBloc.add(
+                                        const HideInfoEvent(),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
-                            const Spacer(),
-                            RoundedIconButton(
-                              icon: Icons.close,
-                              foregroundColor: theme.colorScheme.onBackground,
-                              backgroundColor: theme.colorScheme.background,
-                              onPressed: _hideBottomSheet,
-                            ),
-                          ],
-                        ),
-                        if (subtitle != null)
-                          Text(
-                            subtitle,
-                            style: theme.textTheme.bodyText2,
+                              if (subtitle != null)
+                                Text(
+                                  subtitle,
+                                  style: theme.textTheme.bodyText2,
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
                   ),
                 );
               },
@@ -352,16 +361,20 @@ class _Body extends HookWidget {
   }
 
   void _showBottomSheet() {
+    const animateTo = _midBottomSheetSize;
+
     bottomSheetController.animateTo(
-      _midBottomSheetSize,
+      animateTo,
       duration: _bottomSheetDuration,
       curve: Curves.easeInOut,
     );
   }
 
   void _hideBottomSheet() {
+    const animateTo = _minBottomSheetSize;
+
     bottomSheetController.animateTo(
-      _minBottomSheetSize,
+      animateTo,
       duration: _bottomSheetDuration,
       curve: Curves.easeInOut,
     );

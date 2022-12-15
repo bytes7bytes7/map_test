@@ -5,6 +5,7 @@ class PlaceInfoState extends Equatable with Loadable, Errorable {
     this.isLoading = false,
     this.errorMessage = '',
     this.guessedLocation,
+    this.showInfo = false,
   });
 
   @override
@@ -15,10 +16,13 @@ class PlaceInfoState extends Equatable with Loadable, Errorable {
 
   final MapLocation? guessedLocation;
 
+  final bool showInfo;
+
   PlaceInfoState copyWith({
     bool? isLoading,
     String? errorMessage = '',
     Wrapped<MapLocation>? guessedLocation,
+    bool? showInfo,
   }) {
     return PlaceInfoState(
       isLoading: isLoading ?? this.isLoading,
@@ -26,6 +30,7 @@ class PlaceInfoState extends Equatable with Loadable, Errorable {
       guessedLocation: guessedLocation != null
           ? guessedLocation.value
           : this.guessedLocation,
+      showInfo: showInfo ?? this.showInfo,
     );
   }
 
@@ -41,5 +46,6 @@ class PlaceInfoState extends Equatable with Loadable, Errorable {
         isLoading,
         errorMessage,
         guessedLocation,
+        showInfo,
       ];
 }
